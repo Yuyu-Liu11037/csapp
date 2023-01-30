@@ -131,9 +131,10 @@ NOTES:
  *   2. Use the BDD checker to formally verify that your solutions produce 
  *      the correct answers.
  */
-
-
 #endif
+
+
+
 //1
 /* 
  * bitXor - x^y using only ~ and & 
@@ -166,8 +167,9 @@ int tmin(void) {
  *   Rating: 1
  */
 int isTmax(int x) {
-  return 2;
+    return !(~x+~x) & !(x);
 }
+
 /* 
  * allOddBits - return 1 if all odd-numbered bits in word set to 1
  *   where bits are numbered from 0 (least significant) to 31 (most significant)
@@ -177,7 +179,7 @@ int isTmax(int x) {
  *   Rating: 2
  */
 int allOddBits(int x) {
-  return 2;
+  return !!((x | (x >> 8) | (x >> 16) | (x >> 24)) & 0xaa);
 }
 /* 
  * negate - return -x 
@@ -187,7 +189,7 @@ int allOddBits(int x) {
  *   Rating: 2
  */
 int negate(int x) {
-  return 2;
+  return ~x+1;
 }
 //3
 /* 
@@ -200,7 +202,12 @@ int negate(int x) {
  *   Rating: 3
  */
 int isAsciiDigit(int x) {
-  return 2;
+    int sign = 1 << 31;
+    int upperBound = ~(sign | 0x39);
+    int lowerBound = ~0x30;
+    upperBound = sign & (upperBound+x) >> 31;
+    lowerBound = sign & (lowerBound+1+x) >> 31;
+    return !(upperBound | lowerBound);
 }
 /* 
  * conditional - same as x ? y : z 
@@ -210,7 +217,8 @@ int isAsciiDigit(int x) {
  *   Rating: 3
  */
 int conditional(int x, int y, int z) {
-  return 2;
+    int mask = ~!x+1;
+    return (y & ~mask) | (z & mask);
 }
 /* 
  * isLessOrEqual - if x <= y  then return 1, else return 0 
@@ -220,7 +228,7 @@ int conditional(int x, int y, int z) {
  *   Rating: 3
  */
 int isLessOrEqual(int x, int y) {
-  return 2;
+  return (((x+(~y+1)) & (1 << 31)) >> 31) | !!(x+(~y+1));
 }
 //4
 /* 
@@ -232,7 +240,7 @@ int isLessOrEqual(int x, int y) {
  *   Rating: 4 
  */
 int logicalNeg(int x) {
-  return 2;
+    return ( ( (~x) & (~(~x+1)) ) >> 31 ) & 1;
 }
 /* howManyBits - return the minimum number of bits required to represent x in
  *             two's complement
@@ -247,7 +255,26 @@ int logicalNeg(int x) {
  *  Rating: 4
  */
 int howManyBits(int x) {
-  return 0;
+    int temp=x^(x>>31);//get positive of x;
+    int isZero=!temp;
+    //notZeroMask is 0xffffffff
+    int notZeroMask=(!(!temp)<<31)>>31;
+    int bit_16,bit_8,bit_4,bit_2,bit_1;
+    bit_16=!(!(temp>>16))<<4;
+    //see if the high 16bits have value,if have,then we need at least 16 bits
+    //if the highest 16 bits have value,then rightshift 16 to see the exact place of
+    //if not means they are all zero,right shift nothing and we should only consider the low 16 bits
+    temp=temp>>bit_16;
+    bit_8=!(!(temp>>8))<<3;
+    temp=temp>>bit_8;
+    bit_4=!(!(temp>>4))<<2;
+    temp=temp>>bit_4;
+    bit_2=!(!(temp>>2))<<1;
+    temp=temp>>bit_2;
+    bit_1=!(!(temp>>1));
+    temp=bit_16+bit_8+bit_4+bit_2+bit_1+2;//at least we need one bit for 1 to tmax,
+    //and we need another bit for sign
+    return isZero|(temp&notZeroMask);
 }
 //float
 /* 
