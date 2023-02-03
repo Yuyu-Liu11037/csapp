@@ -289,7 +289,15 @@ int howManyBits(int x) {
  *   Rating: 4
  */
 unsigned floatScale2(unsigned uf) {
-  return 2;
+    int e = (uf >> 23) & 0xff;
+    int sign = uf & (0x1 << 31);
+    int M = (uf << 9) >> 9;
+    if(M == 0 && e == 0) return uf; // 0
+    if(e == 0x0) return (uf << 1) | sign;
+    if(e == 0xff) return uf; // NaN
+    e++;
+    if(e == 0xff && M > 0) return uf;
+    return sign | (e << 23) | M;
 }
 /* 
  * floatFloat2Int - Return bit-level equivalent of expression (int) f
